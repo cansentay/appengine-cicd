@@ -17,6 +17,9 @@ jobs:
         run: npm ci
       - name: Check for Formatting Errors
         run: npm run format
+      - name: Check for Formatting Errors
+        if: failure()
+        run: npm run format:fix
       - name: Check for ESLint Errors
         run: npm run lint
       - name: Check for Type Errors
