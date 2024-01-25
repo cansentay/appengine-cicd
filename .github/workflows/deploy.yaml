@@ -47,7 +47,7 @@ jobs:
         with:
           node-version: 18
           cache: "npm"
-          cache-dependency-path: ./js-cicd/
+          cache-dependency-path: ./
       - name: Install Dependencies
         run: npm ci
       - name: Build App
@@ -56,8 +56,6 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{runner.os}}-pip
-          name: Deploying to Google Cloud
-          runs-on: ubuntu-latest
       - name: Deploy to App Engine
         id: deploy
         uses: google-github-actions/deploy-appengine@v0.2.0
