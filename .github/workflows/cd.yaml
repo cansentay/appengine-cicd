@@ -83,7 +83,7 @@ jobs:
     secrets: inherit
     with:
       github-env: "staging"
-      aws-env: ${{vars.GC_AE_STAGING_ENV}}
+      gke-env: ${{vars.GC_AE_STAGING_ENV}}
   deploy-to-production:
     needs: run-tests
     uses: ./.github/workflows/deploy-prod.yaml
