@@ -1,0 +1,83 @@
+name: Deploy-Production
+on:
+  workflow_dispatch:
+    inputs:
+      gke-env:
+        description: "Google App Engine Environment"
+        required: true
+        default: "production"
+        type: string
+      github-env:
+        description: "Github Environment"
+        required: true
+        default: "production"
+        type: string
+  workflow_call:
+    inputs:
+      gke-env:
+        description: "Google App Engine Environment"
+        required: true
+        default: "production"
+        type: string
+      github-env:
+        description: "Github Environment"
+        required: true
+        default: "production"
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.gke-env }}-${{ inputs.github-env }}
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.github-env }}
+      url: "http://${{ steps.get-env-cname.outputs.gke_env_cname }}"
+    steps:
+      - name: Avoid deploying to production using a non production env
+        if: inputs.gke-env == vars.GC_AE_PRODUCTION_ENV && inputs.github-env != 'production'
+        run: |
+          echo "::error::Cannot deploy to production using a non prodcuction environment"
+          exit 1
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node Environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build App
+        run: npm run build
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{runner.os}}-pip
+      - name: Deploy to App Engine
+        id: deploy
+        uses: google-github-actions/deploy-appengine@v0.2.0
+        with:
+          deliverables: app.yaml 
+          project_id: ${{ secrets.GCP_PROJECT }}
+          credentials: ${{ secrets.GCP_CREDENTIALS }}
+      - name: Notify on Slack
+        uses: slackapi/slack-github-action@v1
+        continue-on-error: true
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚀 Deployment to Google App Engine *${{inputs.gke-env-env}}* using *${{ inputs.github-env }}* GitHub wnvironment  was successfull. <http://${{ steps.get-env-cname.outputs.gke_env_cname }}|View Deployment>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
