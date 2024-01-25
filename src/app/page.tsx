@@ -5,7 +5,7 @@ export default function Home() {
     <main className="main">
       <div>
         <h2>Hello World</h2>
-        <p>asbdibasdasonddfgdfgdfgddfgdfgdfgda</p>
+        <p>Can Sentayy</p>
       </div>
       <Link href="/about">About</Link>
     </main>
